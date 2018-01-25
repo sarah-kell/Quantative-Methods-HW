@@ -1,0 +1,125 @@
+---
+title: "HWRIntermediate"
+author: "Sarah Kell"
+date: "January 17, 2018"
+output:
+  word_document: default
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+knitr::opts_knit$set(root.dir = "C:/Users/Sarah/Desktop/CofC/Quant_Methods/RIntermediate")
+
+setwd("C:/Users/Sarah/Desktop/CofC/Quant_Methods/RIntermediate")
+```
+
+*Can also type in 'i', 'j', 'x' etc. in code to see what is going on 
+
+1.  Created a matrix/table that shows the averages for sepal length and width and petal length and width for each species in the dataframe 'iris'.
+
+2. Describe using pseudo-code how output was calculated
+```{r}
+data("iris")
+sp_ids = unique(iris$Species) #unique returns a vector, dataframe or array like x but with duplicate elements/rows removed. Pulled out the three species in iris and renamed them 'sp_ids' 
+
+output = matrix(0, nrow=length(sp_ids), ncol=ncol(iris)-1) #creates matrix, 0 indicates matrix currently has no data, with rows of species names, with the number of columns within the dataframe 'iris' minus one column (to remove the species column)  
+rownames(output) = sp_ids #assigns rownames in the matrix to the 3 species pulled out of the dataframe
+colnames(output) = names(iris[ , -ncol(iris)]) #column names in matrix are column names in DF iris minus the last column specifically    
+
+for(i in seq_along(sp_ids)) { 
+  # Assigning i to a vector of the 3 species 
+    iris_sp = subset(iris, subset=Species == sp_ids[i], select=-Species)
+    #Create a dataframe for each unique species with the column 'species'              removed 
+    for(j in 1:(ncol(iris_sp))) {
+      # Assign j to a vector that is 1 through the number of columns in                  the subset iris_sp (in this case 1:4) 
+        x = 0 
+        y = 0
+        #create 2 objects, x and y, both defined as equal to 0
+        if (nrow(iris_sp) > 0) {
+          #if the number of rows in iris_sp is greater than zero do the                      following
+            for(k in 1:nrow(iris_sp)) {
+              #Assign k to a vector that is 1 through the number of rows                         in the subset iris_sp (1:50) 
+                x = x + iris_sp[k, j] #define x as the sum of all numbers                          in iris_sp 
+                y = y + 1 # y is equal to set to y +1 
+                #print(paste('y=',y)) #add print (y) to see what is going                          on 
+      
+            }
+            output[i, j] = x / y # The output will populate a matrix of x/y which              are the averages of the variable for each species  
+        }
+    }
+}
+output
+```
+
+3. Output could be renamed 'mean_values' 
+x could be 'sum_parameters'
+y could be 'row_length'     
+
+
+4. Remove the for k loop and have x calculate the mean using the mean function. 
+```{r}
+sp_ids = unique(iris$Species) 
+
+output = matrix(0, nrow=length(sp_ids), ncol=ncol(iris)-1)  
+rownames(output) = sp_ids 
+colnames(output) = names(iris[ , -ncol(iris)])    
+
+for(i in seq_along(sp_ids)) { 
+  iris_sp = subset(iris, subset=Species == sp_ids[i], select=-Species)
+    for(j in 1:(ncol(iris_sp))) {
+      if (nrow(iris_sp) > 0) {
+        x = mean(iris_sp[, j]) 
+        }
+          output[i, j] = x 
+    }
+}
+output
+```
+
+5. Creating loop 
+```{r}
+x<-c(1,2,3,4,5,6,7,8,9,10)
+
+y<-vector("numeric", 10)
+for(i in x) {
+  y[i] <-sum(1:i)
+}
+y
+```
+
+6. Modify loop so values of y greater than 10 return NA
+```{r}
+x<-c(1,2,3,4,5,6,7,8,9,10)
+
+y<-vector("numeric", 10)
+for(i in x) {
+  y[i] <-sum(1:i) 
+    if (y[i] >10) {
+      print("NA") }
+    else {
+      print(y[i]) 
+    }
+}
+y
+```
+
+7. Turn loop into function
+```{r}
+x<-c(1,2,3,4,5,6,7,8,9,10)
+
+sum_vector<-function (x) {
+  y= NULL 
+  for (i in x) {
+    y[i] <-sum(1:i)
+      if (y[i] >10) {
+        print("NA") }
+      else {
+        print(y[i])
+      }
+  }
+}
+sum_vector(x)
+```

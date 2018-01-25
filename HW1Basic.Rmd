@@ -1,0 +1,48 @@
+---
+title: "HW 1 Basic R"
+author: "Sarah Kell"
+date: "January 16, 2018"
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+knitr::opts_knit$set(root.dir = "C:/Users/Sarah/Desktop/CofC/Quant_Methods/RIntro")
+
+setwd("C:/Users/Sarah/Desktop/CofC/Quant_Methods/RIntro")
+```
+
+1. Column names: Plot, Year, Record ID, Corner, Scale, Richness, Easting, northing, Slope, pH, yrsslb 
+```{r}
+tgpp<-read.csv("C:/Users/Sarah/Desktop/CofC/Quant_Methods/HW1Basic/tgpp.csv", header = TRUE)
+#tgpp
+```
+
+2. Rows- 4080 Columns- 11
+```{r}
+dim(tgpp)
+```
+
+3. Mix of integers and numeric 
+```{r}
+sapply(tgpp,class)
+```
+
+4. What are the values of the the datafile for rows 1, 5, and 8 at columns 3, 7, and 10?  
+```{r}
+tgpp[c(1,5,8), c(3,7,10)]
+```
+
+5. Plot scale and richness 
+```{r}
+plot(tgpp$richness~tgpp$scale, xlab="Quadrat Area (m^2)", ylab="Richness", col='violetred')
+```
+
+Using log 'xy' plots the data plots in a logrithmic scale 
+```{r}
+plot(tgpp$richness~tgpp$scale, xlab="Quadrat Area (m^2)", ylab="Richness", col='violetred', log='xy')
+?log
+```
