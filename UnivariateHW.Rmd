@@ -1,0 +1,124 @@
+---
+title: "UnivariateHW"
+author: "Sarah Kell"
+date: "January 30, 2018"
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+knitr::opts_knit$set(root.dir = "C:/Users/Sarah/Desktop/CofC/Quant_Methods/Univariate")
+
+setwd("C:/Users/Sarah/Desktop/CofC/Quant_Methods/Univariate")
+```
+
+```{r}
+trees=read.csv("C:/Users/Sarah/Desktop/CofC/Quant_Methods/Univariate/treedata_subset.csv")
+head(trees)
+Acer<-trees[trees$species=="Acer rubrum",]
+Abies<-trees[trees$species=="Abies fraseri",]
+library(car)
+```
+
+1. Exploratory analysis of species cover
+
+
+*The exploratory linear model for Abies with all the variables included does not do a great job at explaining species abundance (R2 adjusted = 0.501). Elevation is the only variable with a siginificant effect.  
+
+The linear model for Acer is not good (R2 adjusted=0.036).  It does tell you however which variables have an significant effect (elevation, distance to stream and heat load index) on abundance to explore more.  
+```{r}
+Abies_ols<-lm(Abies$cover~Abies$elev+Abies$tci+Abies$streamdist+Abies$disturb+Abies$beers) #R2= 0.501, F=7.171, p=<0.001
+Anova(Abies_ols, type=3)
+summary(Abies_ols)
+
+Acer_ols<-lm(Acer$cover~Acer$elev+Acer$tci+Acer$streamdist+Acer$disturb+Acer$beers) #R2 = 0.03558, F=4.805, p=<0.001
+Anova(Acer_ols, type=3)
+summary(Acer_ols)
+```
+
+*Which explanatory variables are the most important?  
+
+For Abies -  While elevation has the greatest effect on abundance, site water potential is also important.  Adding disturbance in lowers the AIC score a little but only due to the virgin 'undisturbed' areas which makes sense  
+```{r}
+Abies_olsmod<-lm(Abies$cover~Abies$elev)
+Abies_olsmod2<-lm(Abies$cover~Abies$elev+Abies$disturb) #increased R a little due to virgin areas 
+Abies_olsmod3<-lm(Abies$cover~Abies$elev+Abies$tci)
+Abies_olsmod4<-lm(Abies$cover~Abies$elev+Abies$tci+Abies$disturb)
+AIC(Abies_olsmod)
+AIC(Abies_olsmod2) 
+AIC(Abies_olsmod3) #best model
+AIC(Abies_olsmod4) #also looked at Adj R2 by summary 
+```
+
+For Acer - Elevation, distance to stream and heat load index are important.  The interaction of the three variables has the greatest effect on abundance  
+```{r}
+Acer_olsmod<-lm(Acer$cover~Acer$elev+Acer$streamdist+Acer$beers)
+Acer_olsmod1<-lm(Acer$cover~Acer$elev+Acer$streamdist+Acer$elev+Acer$elev*Acer$streamdist+Acer$elev*Acer$beers+Acer$elev*Acer$beers+Acer$elev*Acer$streamdist*Acer$beers)
+AIC(Acer_olsmod)
+AIC(Acer_olsmod1)#best model 
+```
+
+*Do model diagnositcs indicate any problems with violations of OLS assumptions? 
+ 
+Yes- data is not normal for both species 
+```{r}
+plot(Abies_olsmod2)
+plot(Acer_olsmod1)
+```
+
+*Are you able to explain variance in one species better than another- Why? Yes, elevation for Abies is able explain abundance much better than the model with several variables for Acer.  The interaction of variables is often harder to explain and predict vs. one variable that exerts a strong effect.   
+
+2. Using General Linear Model 
+**used the best fit lm models, also best fit here
+```{r}
+Abies_glm_mod<-glm(Abies$cover~Abies$elev+Abies$tci, family='poisson') #site water potential not as important now
+Anova(Abies_glm_mod, type=3)
+Acer_glm_mod<-glm(Acer$cover~Acer$elev+Acer$streamdist+Acer$elev+Acer$elev*Acer$streamdist+Acer$elev*Acer$beers+Acer$elev*Acer$beers+Acer$elev*Acer$streamdist*Acer$beers, family = 'poisson')
+Anova(Acer_glm_mod, type=3) #streamdistance is not longer significant 
+
+AIC(Abies_glm_mod)
+AIC(Acer_glm_mod)
+
+```
+
+Assessing degree of variation by pseudo-R2
+**General function, so that any glm model used will be called in when adding your actual model name in after the pseudo R2 
+```{r}
+pseudo_r2 = function(glm_mod) {
+     1 -  glm_mod$deviance / glm_mod$null.deviance
+}
+pseudo_r2(Abies_glm_mod) #R2= 0.514
+pseudo_r2(Acer_glm_mod) #R2= 0.0627
+```
+
+Comparing OLS and glm models
+RSS is the unexplained variance, lower the better**
+```{r}
+anova(Abies_olsmod2, Abies_glm_mod) #glm model does a better job at lowering the residual (unexplained) variance 
+anova(Acer_olsmod1, Acer_glm_mod) #same as above 
+```
+
+*Did changing the error distribution change the results much? 
+The glm models were able to lower the residual (unexplained)
+variance but the adjusted R2 values were pretty much the same. In the Acer glm model, stream distance is no longer an important variable, in the Abies glm model site water potential is not as important.   
+
+3. Summary of findings
+Red maples are habitat generalists which can tolerate a wide range of habitat conditions.  Species abundance appears to be affected the most by the combination of elevation and heat load index.
+
+Abies fraseri are habitat specialists which limits their abundance due to needing specific conditions to thrive.  Elevation is the most important factor in limiting their distribution and abundance.   
+
+5. Step() function
+Abies fraseri
+```{r}
+library(MASS)
+stepAIC(Abies_ols)
+```
+
+Acer rubrum
+```{r}
+stepAIC(Acer_ols)
+```
+
