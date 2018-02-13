@@ -1,0 +1,120 @@
+---
+title: "MultivariateHW"
+author: "Sarah Kell"
+date: "February 8, 2018"
+output:
+  word_document: default
+  html_document: default
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+knitr::opts_knit$set(root.dir = "../../../../CofC/Quant_Methods/Multivariate")
+```
+
+```{r}
+library(vegan)
+library(dummies)
+data(dune)
+data(dune.env) #dataframe of 20 observations (sites) on five variables 
+?dune
+head(dune.env)
+```
+
+
+ 1. Conduct an indirect ordination on the dune plant community. Specifically, visually examine a NMDS plot using the bray-curtis distance metric. Below is some code to help you develop a potential plot that emphasizes the role of the environmental variable "Moisture". 
+ 
+* Describe how you interpret the graphic- The dots represent the moisture level of the soil with 1 being the least and 5 being the most.  The species distance to a moisture dot indicates the soil conditions in which it was found 
+* What is the goal of creating such a plot? You can get a quick idea of the moisture requirements for the 30 species 
+* Does this analysis suggest any interesting findings with respect to the dune vegetation? Species tend to either require little moisture or relatively moist soil
+```{r}
+dune_mds = metaMDS(dune) #unconstrained matrix- no expectations for variables 
+
+plot(dune_mds, type='n')
+ text(dune_mds, 'sp', cex=.5)
+ color_vect = rev(terrain.colors(6))[-1] # generate vector of colors 
+ points(dune_mds, 'sites', pch=19, 
+        col=color_vect[dune.env$Moisture])
+ legend('topright', paste("Moisture =", 1:5, sep=''), 
+        col=color_vect, pch=19)
+```
+2. Use CCA to test hypotheses derived from MDS plot. 
+
+Specifically, carry out a test of the entire model (i.e., including all constrained axes) and also carry out tests at the scale of individual explanatory variables you included in your model if you included more than one variable. Plot your results.
+
+Testing entire model - dune (y) ~ dune.env(x) 
+```{r}
+cca_dune = cca(dune ~ ., data = dune.env,scale=TRUE )
+cca_dune
+RsquareAdj(cca_dune) #AdjR2=0.23
+```
+
+```{r}
+anova(cca_dune, permutations = 1000) #F=1.4325, p=0.02, good model fit
+anova(cca_dune, by='margin', permutations = 1000) #No individual variables are significant, A1 and moisture appear to be most important
+```
+
+Plotting Data 
+```{r}
+plot(cca_dune, type='n', scaling=1)
+orditorp(cca_dune, display='sp', cex=0.5, scaling=1, col='blue')
+text(cca_dune, display='bp', col='red')
+```
+
+Models looking at individual variables 
+```{r}
+cca_dune2 = cca(dune ~ A1 + Moisture, data = dune.env,scale=TRUE)
+cca_dune2
+RsquareAdj(cca_dune2) #AdjR2 = 0.187, decreased from entire model
+anova(cca_dune2, permutations = 1000) #F = 2.0335, p=0.003 better model fit than all variables 
+anova(cca_dune2, by='margin', permutations = 1000)
+```
+
+Soil A1 horizon only 
+```{r}
+cca_dune3 = cca(dune ~ A1, data = dune.env, scale=TRUE)
+cca_dune3
+RsquareAdj(cca_dune3) #AdjR2 = 0.058, 
+anova(cca_dune3, permutations = 1000) #F = 2.14, p=0.03
+```
+Moisture only 
+```{r}
+cca_dune4 = cca(dune ~ Moisture, data = dune.env, scale=TRUE)
+cca_dune4
+RsquareAdj(cca_dune4) #AdjR2 = 0.171, 
+anova(cca_dune4, permutations = 1000) #F = 2.25, p=0.0009  BEST FIT 
+```
+Management only
+```{r}
+cca_dune5 = cca(dune ~ Management, data = dune.env, scale=TRUE)
+cca_dune5
+RsquareAdj(cca_dune5) #AdjR2 = 0.157, 
+anova(cca_dune5, permutations = 1000) #F = 2.13, p=0.0009
+```
+Land Use 
+```{r}
+cca_dune6 = cca(dune ~ Use, data = dune.env, scale=TRUE)
+cca_dune6
+RsquareAdj(cca_dune6) #AdjR2 = 0.017, 
+anova(cca_dune6, permutations = 1000) #F = 1.14, p=0.228 Not significant 
+```
+Manure 
+```{r}
+cca_dune7 = cca(dune ~ Manure, data = dune.env, scale=TRUE)
+cca_dune7
+RsquareAdj(cca_dune7) #AdjR2 = 0.108, 
+anova(cca_dune7, permutations = 1000) #F = 1.53, p=0.019 
+```
+
+
+3. Do your two analyses agree with one another or complement one another or do these two analyses seem to be suggesting different take home messages? 
+The two analyses agree in that moisture is the most important variable in determining species of dune vegetation.  
+
+
+*Which analysis do you find to be more useful? (NMDS plot vs cca) 
+I like both equally as companions to one another.  The NMDS plot provides a quick idea of what is going on with moisture and which moisture levels are most important.  CCA provides more statistical relevance, in determing the F and p values of moisture.  
+
+ 
+ 
